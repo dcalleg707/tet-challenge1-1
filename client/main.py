@@ -18,9 +18,9 @@ def print_title():
 
     print('Welcome to DistriB CLI!', end='\n\n')
 
-def command_checker(cmd, args):
+def elemental_commands(cmd, args):
     # Manual
-    elif cmd == "man":
+    if cmd == "man":
         if args:
             print(f'No manual entry for {args[0]}')
         else:
@@ -31,7 +31,7 @@ def command_checker(cmd, args):
         try:
             if args:
                 if args[0] == "--help" or args[0] == '-h':
-                    print('cd: cd [dir]\n\tChange the shell working directory.')
+                    print('Usage: cd [dir]\nChange the shell working directory.\n')
                 else:
                     directory = args if len(args) > 1 else args[0] 
                     os.chdir(directory)
@@ -49,6 +49,9 @@ def command_checker(cmd, args):
         
         hidden = False
         if "-a" in params: hidden = True
+        if "--help" in params:
+            print('Usage: ls [OPTION]... [FILE]...\nList information about the FILEs (the current directory by default).\n\nMandatory arguments to long options are mandatory for short options too.\n\t-a                  do not ignore entries starting with .\n')
+            return
 
         if len(args) > 1:
             for elem in args:
@@ -68,7 +71,16 @@ def command_checker(cmd, args):
                 if d[0] != "." or hidden:
                     print(d, end='  ')
             print('')
+
+def command_checker(cmd, args):
+    elemental_commands(cmd, args)
     
+    if cmd == "upload":
+        print('UPLOAD')
+    if cmd == "list-files":
+        print('LIST-FILES')
+    if cmd == "download":
+        print('DOWNLOAD')
     else:
         print(f'{cmd}: command not found')
 
@@ -87,11 +99,9 @@ def main():
             args = user_input[1:] if len(user_input) > 1 else []
 
             #print(f'<<TEST STRING: COMMAND: {command}; args {args}>>')
-
             command_checker(command, args)
             
             
-
     except KeyboardInterrupt:
         print('\n\nBye!\n')
 
