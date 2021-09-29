@@ -65,7 +65,7 @@ class ConvertIRServer(BaseHTTPRequestHandler):
         self.wfile.write(bytes("Connection established", constants.ENCODING_FORMAT))
 
     def do_POST(self):
-        length = int(self.headers.getheader('content-length'))
+        length = int(self.headers.get('content-length'))
         field_data = self.rfile.read(length)
         fields = parse_qs(field_data)
         print(field_data)
