@@ -1,8 +1,8 @@
 
 import time
 import os
-import http.client
-#import constants
+import requests
+import constants
 
 def print_title():
     os.system('clear')
@@ -72,17 +72,22 @@ def elemental_commands(cmd, args):
                     print(d, end='  ')
             print('')
 
-def command_checker(cmd, args):
-    elemental_commands(cmd, args)
+    # Clear
+    elif cmd == "clear":
+        print_title()
     
-    if cmd == "upload":
-        print('UPLOAD')
-    if cmd == "list-files":
-        print('LIST-FILES')
-    if cmd == "download":
-        print('DOWNLOAD')
-    else:
-        print(f'{cmd}: command not found')
+    return cmd == "man" or cmd == "cd" or cmd == "ls" or cmd == "clear"
+
+def command_checker(cmd, args):
+    if not elemental_commands(cmd, args):
+        if cmd == "upload":
+            print('UPLOAD')
+        elif cmd == "list-files":
+            to_list_files()
+        elif cmd == "download":
+            print('DOWNLOAD')
+        else:
+            print(f'{cmd}: command not found')
 
 
 def main():
@@ -101,10 +106,25 @@ def main():
             #print(f'<<TEST STRING: COMMAND: {command}; args {args}>>')
             command_checker(command, args)
             
-            
     except KeyboardInterrupt:
         print('\n\nBye!\n')
 
+def test_connection(url, port):
+    try:
+        requests.get(url+':'+port+"/ping")
+    except ConnectionRefusedError:
+        os.system('clear')
+        print('Connection refused! Please contact the administrator')
+        time.sleep(3)
+        raise ConnectionRefusedError
+
+def to_list_files():
+    try:
+        test_connection(constants.HERMES_URL, constants.HERMES_PORT)
+        r = requests.get(constants.HERMES_URL+':'+constants.HERMES_PORT+'/')
+        print(str(r.json()))
+    except:
+        return
 
 if __name__ == '__main__':
     main()
