@@ -44,7 +44,7 @@ Se trata de un programa interactivo en Python que funciona de manera similar a u
 
 También el cliente tiene el comando `list-files` que informará al usuario sobre cuántos archivos tiene alamacenados en esta base de datos y cómo se llaman.
 
-[IMAGEN]
+![image](https://user-images.githubusercontent.com/52968530/135774506-d0e81f01-52ab-43e7-bbb3-69769074fde1.png)
 
 Desde la lógica del cliente, tenemos que acá se particionan los datos. Al escoger el archivo, se genera un `gzip`, que luego se particiona en 3 partes con `split` y estas particiones se envían por HTTP como JSON al servidor Moises. **Es decir que es el cliente el encargado de particionar los datos**.
 
@@ -57,6 +57,14 @@ Recibe las peticiones POST de adición de archivos. Este servidor se encarga de 
 
 Recibe las peticiones GET de recuperación de información. Este servidor maneja la lógica tanto para recuperar un listado de todos los archivos guardados y entregar sus nombres como de uno en particular y enviarle por medio de JSON la información al cliente.
 
+## Parámetros
+
+```.env
+SERVER_IP = ''
+MOISES_PORT = 10000
+HERMES_PORT = 11000
+DB_SERVER_PORT = 12000
+```
 
 ## Participantes
 
