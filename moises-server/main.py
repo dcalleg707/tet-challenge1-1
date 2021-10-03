@@ -18,9 +18,19 @@ class ConvertIRServer(BaseHTTPRequestHandler):
                 part1 = query['part1']
                 part2 = query['part2']
                 part3 = query['part3']
-                #requests.post al servidor de guardado 
+                data = "aaaa"
+                #data = requests.post al servidor de guardado 
+                res = { "data": data }
+                self.send_response(200)
+                self.send_header("content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT)) 
             except:
-                print('Hubo un error xD')
+                res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
+                self.send_response(404)
+                self.send_header("content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
 
 
         
