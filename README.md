@@ -34,9 +34,9 @@ Requerimientos:
 
 Para resolver esto, tomamos el caso de una base de datos distribuida, y empezamos a discutir sobre cuál sería la mejor manera de implementarlo. Empezaremos mostrando nuestra solución final de infraestructura.
 
-[IMAGEN]
+![image](https://user-images.githubusercontent.com/52968530/135773397-31bf385a-4f37-4860-9a56-2a1787b314e2.png)
 
-Hay tres operaciones elementales por definir en este problema UPLOAD (cargar archivos), READ (leer archivos) y DELETE (eliminar archivos). Explicaremos, a continuación, la participación de los diferentes actores de esta infraestructura (las máquinas instanciadas) en las distintas operaciones.
+Hay tres operaciones elementales por definir en este problema UPLOAD (cargar archivos), LIST-FILES (leer archivos) y DOWNLOAD (descargar archivos). Explicaremos, a continuación, la participación de los diferentes actores de esta infraestructura (las máquinas instanciadas) en las distintas operaciones.
 
 ## Cliente
 
