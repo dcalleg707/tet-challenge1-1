@@ -40,10 +40,22 @@ Hay tres operaciones elementales por definir en este problema UPLOAD (cargar arc
 
 ## Cliente
 
-## Servidor MOISES
+Se trata de un programa interactivo en Python que funciona de manera similar a una Shell, incluyendo los comandos `cd` y `ls` para poder navegar entre los archivos del sistema y poder seleccionar fácilmente el que se desea cargar con el comando `upload [file]` o decidir en cuál carpeta se descargará por medio de `download [file]`.
 
-## Servidor HERMES
+También el cliente tiene el comando `list-files` que informará al usuario sobre cuántos archivos tiene alamacenados en esta base de datos y cómo se llaman.
 
+[IMAGEN]
+
+Desde la lógica del cliente, tenemos que acá se particionan los datos. Al escoger el archivo, se genera un `gzip`, que luego se particiona en 3 partes con `split` y estas particiones se envían por HTTP como JSON al servidor Moises. **Es decir que es el cliente el encargado de particionar los datos**.
+
+Para las otras operaciones, se hacen peticiones GET hacia el servidor Hermes.
+## Servidor Moises
+
+Recibe las peticiones POST de adición de archivos. Este servidor se encarga de recibir los datos particionados con el nombre del archivo, genera un código hash a partir del nombre y luego envía a los clústeres de base de datos correspondientes un par `<key, value>` donde key es el hash generado y value es la parte del dato.
+
+## Servidor Hermes
+
+Recibe las peticiones GET de recuperación de información. Este servidor maneja la lógica tanto para recuperar un listado de todos los archivos guardados y entregar sus nombres como de uno en particular y enviarle por medio de JSON la información al cliente.
 
 
 ## Participantes
