@@ -19,7 +19,9 @@ class ConvertIRServer(BaseHTTPRequestHandler):
                 part2 = query['part2']
                 part3 = query['part3']
                 data = "aaaa"
-                #data = requests.post al servidor de guardado 
+                #requests.post al servidor de guardado 1
+                #requests.post al servidor de guardado 2
+                #requests.post al servidor de guardado 3
                 res = { "data": data }
                 self.send_response(200)
                 self.send_header("content-type", "application/json")
