@@ -3,36 +3,55 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import constants
 import requests
+import json
 
 class ConvertIRServer(BaseHTTPRequestHandler):
-    def do_GET(self):
+    def do_POST(self):
         url = urlparse(self.path)
         path = url.path
-        query = parse_qs(url.query)
-
-        for k in query.keys(): # Query string values can be lists. We get the first value only
-            query[k] = query[k][0]
         
         if (path == '/'):
-            try:
-                part1 = query['part1']
-                part2 = query['part2']
-                part3 = query['part3']
-                data = "aaaa"
-                #requests.post al servidor de guardado 1
-                #requests.post al servidor de guardado 2
-                #requests.post al servidor de guardado 3
-                res = { "data": data }
-                self.send_response(200)
+            length = int(self.headers.get('content-length'))
+            field_data = self.rfile.read(length)
+            body = json.loads(field_data.decode(constants.ENCODING_FORMAT))
+
+            if not 'data_0' in body:
+                self.send_response(400)
                 self.send_header("content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT)) 
-            except:
-                res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
-                self.send_response(404)
+                self.wfile.write(bytes("Missing 'data_0' in body", constants.ENCODING_FORMAT)) 
+            if not 'data_1' in body:
+                self.send_response(400)
                 self.send_header("content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
+                self.wfile.write(bytes("Missing 'data_1' in body", constants.ENCODING_FORMAT)) 
+            if not 'data_2' in body:
+                self.send_response(400)
+                self.send_header("content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(bytes("Missing 'data_2' in body", constants.ENCODING_FORMAT))
+            
+            else:
+                try:
+                    name = body['name']
+                    part1 = body['data_0']
+                    part2 = body['data_1']
+                    part3 = body['data_2']
+                    data = "aaaa"
+                    #requests.post al servidor de guardado 1
+                    #requests.post al servidor de guardado 2
+                    #requests.post al servidor de guardado 3
+                    res = { "data": data }
+                    self.send_response(202)
+                    self.send_header("content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT)) 
+                except:
+                    res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
+                    self.send_response(404)
+                    self.send_header("content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
 
 
         

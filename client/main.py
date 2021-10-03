@@ -150,7 +150,14 @@ def to_upload(args):
                 os.system(f'split -n 3 "{f_name}.gz"')
                 
                 print_progress_bar(2, 4, prefix = 'Progress:', suffix = 'Storing...')
-                # TODO: Code to send xaa, xab, xac
+                xaa = ''.join(open('xaa', 'r').readlines())
+                xab = ''.join(open('xab', 'r').readlines())
+                xac = ''.join(open('xac', 'r').readlines())
+                requests.post(
+                    constants.SERVER_URL + ':' + constants.MOISES_PORT,
+                    data={ 'name': f_name, 'data_0': xaa, 'data_1': xab, 'data_1': xac},
+                    headers={ 'content-type': 'application/json' }
+                )
                 
                 print_progress_bar(3, 4, prefix = 'Progress:', suffix = 'Cleaning...')
                 os.system(f'rm *.gz xaa xab xac')
