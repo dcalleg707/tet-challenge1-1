@@ -81,14 +81,13 @@ def elemental_commands(cmd, args):
 def command_checker(cmd, args):
     if not elemental_commands(cmd, args):
         if cmd == "upload":
-            print('UPLOAD')
+            to_upload(args)
         elif cmd == "list-files":
             to_list_files()
         elif cmd == "download":
             print('DOWNLOAD')
         else:
             print(f'{cmd}: command not found')
-
 
 def main():
     print('***********************************')
@@ -99,7 +98,20 @@ def main():
     try:
         while True:
             pwd = '[' + os.getcwd().replace("\\\\", "/") + ']'
-            user_input = input(pwd + ' # ').split()
+            shell_input = " ".join(input(pwd + ' # ').split())
+            user_input = []
+            start = 0
+            inQuotes = False
+            for i in range(len(shell_input)):
+                if shell_input[i] == '"' or shell_input[i] == "'":
+                    inQuotes = not inQuotes
+
+                if (shell_input[i] == ' ' or i == len(shell_input) - 1) and not inQuotes:
+                    end = i + 1 if i == len(shell_input) - 1 else i
+                    user_input.append(shell_input[start:end])
+                    start = i + 1
+                    inQuotes = False
+            
             command = user_input[0]
             args = user_input[1:] if len(user_input) > 1 else []
 
@@ -126,43 +138,52 @@ def to_list_files():
     except:
         return
 
+def to_upload(args):
+    if args:
+        for f_name in args:
+            f_name = f_name.replace("'", "")
+            try:
+                print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Zipping...')
+                os.system(f'gzip -k "{f_name}"')
+                
+                print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Partitioning...')
+                os.system(f'split -n 3 "{f_name}.gz"')
+                
+                print_progress_bar(2, 4, prefix = 'Progress:', suffix = 'Storing...')
+                # TODO: Code to send xaa, xab, xac
+                
+                print_progress_bar(3, 4, prefix = 'Progress:', suffix = 'Cleaning...')
+                os.system(f'rm *.gz xaa xab xac')
+
+                print_progress_bar(4, 4, prefix = 'Progress:', suffix = 'Complete!')
+                print()
+            except FileNotFoundError:
+                print(f'upload: {f_name}: No such file or directory')
+    else:
+        print('Usage: upload [path/to/file>...]')
+
+def print_progress_bar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 50, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    clean = ' ' * 70
+    print(f'\rclean', end = printEnd)
+    print(f'\r{prefix} [{bar}] {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
+
 if __name__ == '__main__':
     main()
-
-# Test connection
-# try:
-#     conn = http.client.HTTPConnection(constants.TABLE_SERVER, constants.TABLE_PORT)
-#     conn.request("GET", "/ping")
-# except ConnectionRefusedError:
-#     os.system('clear')
-#     print('Connection refused! Please contact the administrator')
-#     time.sleep(3)
-#     continue
-
-# Connection
-# try:
-#     conn = http.client.HTTPConnection(constants.CONVERT_SERVER, constants.CONVERT_PORT)
-#     conn.request("GET", f'/?value={ir}&actualIrType={actual_irt}&newIrType={new_irt}')
-#     res = conn.getresponse()
-#     # ANSWER
-#     answer = res.read().decode(constants.ENCODING_FORMAT)
-#     print('\nAnswer')
-#     print(f': {answer} % {new_irt}')
-
-#     print('\nPress any key to go back...')
-#     input()
-# except ConnectionRefusedError:
-#     os.system('clear')
-#     print('Connection refused! Please contact the administrator')
-#     time.sleep(3)
-#     continue
-
-# MONTHS
-# print_gen_table_header(init_value, ir, months)
-# print('\nSet the periods amount to pay (enter \'q\' to quit)')
-# data_to_send = input(': ')
-
-# while(not (is_float(data_to_send) or data_to_send == 'q')):
-#     print('Please, input an int number')
-#     data_to_send = input(': ')
-# if (data_to_send == 'q'): continue
