@@ -13,7 +13,23 @@ class ConvertIRServer(BaseHTTPRequestHandler):
             query[k] = query[k][0]
         
         if (path == '/'):
-            pass #Main code
+            try:
+                file = query['file']
+                data = "aaaa"
+                #part1 = requests.get al servidor de guardado 1 
+                #part2 = requests.get al servidor de guardado 2
+                #part3 = requests.get al servidor de guardado 3
+                res = { "data": data }
+                self.send_response(200)
+                self.send_header("content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT)) 
+            except:
+                res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
+                self.send_response(404)
+                self.send_header("content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
         
         elif (path == '/ping'):
             self.send_response(200)
