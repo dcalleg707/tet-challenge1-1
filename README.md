@@ -34,7 +34,7 @@ Requerimientos:
 
 Para resolver esto, tomamos el caso de una base de datos distribuida, y empezamos a discutir sobre cuál sería la mejor manera de implementarlo. Empezaremos mostrando nuestra solución final de infraestructura.
 
-![image](https://user-images.githubusercontent.com/52968530/135773397-31bf385a-4f37-4860-9a56-2a1787b314e2.png)
+![image](https://user-images.githubusercontent.com/52968530/135775601-141e6fd3-cbe9-4dc0-ba09-d9fb6b2b0a3d.png)
 
 Hay tres operaciones elementales por definir en este problema UPLOAD (cargar archivos), LIST-FILES (leer archivos) y DOWNLOAD (descargar archivos). Explicaremos, a continuación, la participación de los diferentes actores de esta infraestructura (las máquinas instanciadas) en las distintas operaciones.
 
