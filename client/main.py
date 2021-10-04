@@ -33,7 +33,7 @@ def elemental_commands(cmd, args):
                 if args[0] == "--help" or args[0] == '-h':
                     print('Usage: cd [dir]\nChange the shell working directory.\n')
                 else:
-                    directory = args if len(args) > 1 else args[0] 
+                    directory = " ".join(args) if len(args) > 1 else args[0] 
                     os.chdir(directory)
 
         except FileNotFoundError as e:
