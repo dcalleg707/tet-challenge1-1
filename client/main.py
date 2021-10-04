@@ -130,10 +130,10 @@ def test_connection(url, port):
         time.sleep(3)
         raise ConnectionRefusedError
 
-def to_list_files():
+def to_list_files(id=""):
     try:
         test_connection(constants.HERMES_URL, constants.HERMES_PORT)
-        r = requests.get(constants.HERMES_URL+':'+constants.HERMES_PORT+'/')
+        r = requests.get(constants.HERMES_URL+':'+constants.HERMES_PORT+'/' + ('' if not id else ('?id='+id)))
         print(str(r.json()))
     except:
         return
@@ -155,7 +155,7 @@ def to_upload(args):
                 xac = ''.join(open('xac', 'r').readlines())
                 requests.post(
                     constants.SERVER_URL + ':' + constants.MOISES_PORT,
-                    data={ 'name': f_name, 'data_0': xaa, 'data_1': xab, 'data_1': xac},
+                    data={ 'name': f_name, 'data_0': xaa, 'data_1': xab, 'data_2': xac},
                     headers={ 'content-type': 'application/json' }
                 )
                 
