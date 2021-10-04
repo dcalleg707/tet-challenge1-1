@@ -83,7 +83,7 @@ def command_checker(cmd, args):
         if cmd == "upload":
             to_upload(args)
         elif cmd == "list-files":
-            to_list_files()
+            to_list_files(args)
         elif cmd == "download":
             print('DOWNLOAD')
         else:
@@ -123,19 +123,20 @@ def main():
 
 def test_connection(url, port):
     try:
-        requests.get(url+':'+port+"/ping")
+        requests.get('http://'+url+':'+port+"/ping")
     except ConnectionRefusedError:
         os.system('clear')
         print('Connection refused! Please contact the administrator')
         time.sleep(3)
         raise ConnectionRefusedError
 
-def to_list_files(id=""):
+def to_list_files(args=""):
     try:
         test_connection(constants.HERMES_URL, constants.HERMES_PORT)
-        r = requests.get(constants.HERMES_URL+':'+constants.HERMES_PORT+'/' + ('' if not id else ('?id='+id)))
-        print(str(r.json()))
-    except:
+        r = requests.get("http://"+constants.HERMES_URL+':'+constants.HERMES_PORT+'/' + ('' if not args else ("?id="+' '.join(args))))
+        print(r.text)
+    except Exception as e:
+        print(e)
         return
 
 def to_upload(args):
