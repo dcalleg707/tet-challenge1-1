@@ -32,7 +32,7 @@ class DBServer(BaseHTTPRequestHandler):
                 f = open('data.store', 'r')
                 datalist = json.load(f)
 
-                data = [d for d in datalist if d['id'] == query['id'][0]]
+                data = [d for d in datalist if query['id'][0] in d.keys()]
 
                 res = { "data": data }
                 self.send_response(200)
@@ -66,14 +66,16 @@ class DBServer(BaseHTTPRequestHandler):
             
             f = open('data.store', 'r')
             data = json.load(f)
+            print(field_data)
             entry = json.loads(field_data.decode(constants.ENCODING_FORMAT))
             if isinstance(entry, list):
                 for e in entry:
                     data.append(e)
             else:
                 data.append(entry)
+            
             f.close()
-
+ 
             f = open('data.store', 'w')
             json.dump(data, f)
 

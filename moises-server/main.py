@@ -4,6 +4,7 @@ from urllib.parse import urlparse, parse_qs
 import constants
 import requests
 import json
+import hashlib
 
 class ConvertIRServer(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -14,7 +15,6 @@ class ConvertIRServer(BaseHTTPRequestHandler):
             length = int(self.headers.get('content-length'))
             field_data = self.rfile.read(length)
             body = json.loads(field_data.decode(constants.ENCODING_FORMAT))
-
             if not 'data_0' in body:
                 self.send_response(400)
                 self.send_header("content-type", "application/json")
@@ -29,18 +29,31 @@ class ConvertIRServer(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header("content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(bytes("Missing 'data_2' in body", constants.ENCODING_FORMAT))
+                self.wfile.write(bytes("Missing 'data_2' in body", constants.ENCODING_FORMAT))    
             
             else:
                 try:
+                    
                     name = body['name']
                     part1 = body['data_0']
                     part2 = body['data_1']
                     part3 = body['data_2']
-                    data = "aaaa"
-                    #requests.post al servidor de guardado 1
-                    #requests.post al servidor de guardado 2
-                    #requests.post al servidor de guardado 3
+                    data = {'status': 'recieved'}
+                    requests.post(
+                        "http://"+constants.GROUP_1+":"+ constants.GROUP_1_PORT,
+                        data=json.dumps({ hashlib.sha256(name.encode()).hexdigest(): part1}),
+                        headers={ 'content-type': 'application/json' }
+                    )
+                    requests.post(
+                        "http://"+constants.GROUP_2+":"+ constants.GROUP_2_PORT,
+                        data=json.dumps({ hashlib.sha256(name.encode()).hexdigest(): part2}),
+                        headers={ 'content-type': 'application/json' }
+                    )
+                    requests.post(
+                        "http://"+constants.GROUP_3+":"+ constants.GROUP_3_PORT,
+                        data=json.dumps({  hashlib.sha256(name.encode()).hexdigest(): part3}),
+                        headers={ 'content-type': 'application/json' }
+                    )
                     res = { "data": data }
                     self.send_response(202)
                     self.send_header("content-type", "application/json")

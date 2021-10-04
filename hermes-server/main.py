@@ -2,6 +2,9 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import constants
+import json
+import hashlib
+import requests
 
 class ConvertIRServer(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -14,12 +17,20 @@ class ConvertIRServer(BaseHTTPRequestHandler):
         
         if (path == '/'):
             try:
-                file = query['file']
-                data = "aaaa"
-                #part1 = requests.get al servidor de guardado 1 
-                #part2 = requests.get al servidor de guardado 2
-                #part3 = requests.get al servidor de guardado 3
-                res = { "data": data }
+                data =[]
+                if('id' in query):
+                    id = hashlib.sha256(query['id'].encode()).hexdigest()
+                    part1 = requests.get('http://'+constants.GROUP_1+':'+constants.GROUP_1_PORT+'/data?id='+id).text
+                    part2 = requests.get('http://'+constants.GROUP_2+':'+constants.GROUP_2_PORT+'/data?id='+id).text
+                    part3 = requests.get('http://'+constants.GROUP_3+':'+constants.GROUP_3_PORT+'/data?id='+id).text
+                    data = [part1, part2, part3]
+                else:
+                    part1 = requests.get('http://'+constants.GROUP_1+':'+constants.GROUP_1_PORT).text
+                    part2 = requests.get('http://'+constants.GROUP_2+':'+constants.GROUP_2_PORT).text
+                    part3 = requests.get('http://'+constants.GROUP_3+':'+constants.GROUP_3_PORT).text
+                    data = [part1, part2, part3]
+
+                res = { "data": data}
                 self.send_response(200)
                 self.send_header("content-type", "application/json")
                 self.end_headers()
