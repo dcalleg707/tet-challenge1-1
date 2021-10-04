@@ -155,8 +155,8 @@ def to_upload(args):
                 xab = ''.join(open('xab', 'r').readlines())
                 xac = ''.join(open('xac', 'r').readlines())
                 requests.post(
-                    constants.SERVER_URL + ':' + constants.MOISES_PORT,
-                    data={ 'name': f_name, 'data_0': xaa, 'data_1': xab, 'data_2': xac},
+                    'http://'+constants.SERVER_URL + ':' + constants.MOISES_PORT,
+                    data=json.dumps({ 'name': f_name, 'data_0': xaa, 'data_1': xab, 'data_2': xac}),
                     headers={ 'content-type': 'application/json' }
                 )
                 
