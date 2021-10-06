@@ -62,7 +62,7 @@ def elemental_commands(cmd, args):
                     print(f'{elem}:')
                     for d in dirs:
                         if d[0] != "." or hidden:
-                            print(d, end='  ')
+                            print(d, end='\t')
                     print('\n')
                 
                 except FileNotFoundError as e:
@@ -125,24 +125,24 @@ def main():
 
 def test_connection(url, port):
     try:
-        requests.get('http://'+url+':'+port+"/ping")
-    except ConnectionRefusedError:
-        os.system('clear')
-        print('Connection refused! Please contact the administrator')
-        time.sleep(3)
-        raise ConnectionRefusedError
+        requests.get(f'{url}:{port}/')
+    except:
+        raise ConnectionError
 
 def to_download(args):
     if args:
         for f_name in args:
             f_name = f_name.replace("'", "")
+            f_name = f_name.replace('"', "")
             try:
                 print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Connecting...')
-                # TODO: test connection
+                test_connection(constants.SERVER_URL, constants.HERMES_PORT)
                 
                 print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Downloading...')
                 r = requests.get(f'{constants.SERVER_URL}:{constants.HERMES_PORT}/?id={f_name}')
-                r = json.loads(r.text.replace("'", '"'))
+                if 'error' in json.loads(r.text.replace("'", '"')): raise FileNotFoundError
+
+                r = json.loads(r.text.replace('"', '\\"').replace("'", '"'))
                 xaa_content = r['data'][0][f_name]
                 xab_content = r['data'][1][f_name]
                 xac_content = r['data'][2][f_name]
@@ -168,25 +168,41 @@ def to_download(args):
                 print_progress_bar(4, 4, prefix = 'Progress:', suffix = 'Complete!')
                 print()
             except FileNotFoundError:
-                print(f'upload: {f_name}: No such file or directory')
+                print(f'\r{" " * 100}\rdownload: {f_name}: No such file or directory')
+            except ConnectionError:
+                print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Connecting...')
+                time.sleep(0.5)
+                print(f'\r{" " * 100}\rServer Connection Error!\nTry it again later or contact an administrator, but don\'t worry. Your data is safe :)')
     else:
-        print('Usage: upload [path/to/file>...]')
+        print('Usage: download [path/to/file]...')
 
+# This method list the files uploaded on server
 def to_list_files():
     try:
-        r = requests.get(constants.SERVER_URL+':'+str(constants.HERMES_PORT))
-        data = json.loads(r.text)
+        test_connection(constants.SERVER_URL, constants.HERMES_PORT)
+        print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Connecting...')
+        r = requests.get(f'{constants.SERVER_URL}:{constants.HERMES_PORT}')
+        print(f'\r{" " * 100}', end = '\r')
+
+        # Printing response
+        data = json.loads(r.text.replace("'", '"'))['data']
         for d in data:
             print(d, end='\t')
-    except Exception as e:
-        print(e)
-        return
+        print()
+        
+    except ConnectionError:
+        print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Connecting...')
+        time.sleep(0.5)
+        print(f'\r{" " * 100}\rServer Connection Error!\nTry it again later or contact an administrator, but don\'t worry. Your data is safe :)')
 
 def to_upload(args):
     if args:
         for f_name in args:
             f_name = f_name.replace("'", "")
             try:
+                print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Connecting...')
+                test_connection(constants.SERVER_URL, constants.MOISES_PORT)
+
                 print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Zipping...')
                 os.system(f'gzip -k "{f_name}"')
                 
@@ -203,7 +219,7 @@ def to_upload(args):
                 b3 = base64.b64encode(xac).decode(constants.ENCODING_FORMAT)
 
                 r = requests.post(
-                    constants.SERVER_URL+':'+str(constants.MOISES_PORT),
+                    f'{constants.SERVER_URL}:{constants.MOISES_PORT}',
                     data=json.dumps({ 'name': f_name, 'data_0': b1, 'data_1': b2, 'data_2': b3 }),
                     headers={ 'content-type': 'application/json' }
                 )
@@ -215,8 +231,12 @@ def to_upload(args):
                 print()
             except FileNotFoundError:
                 print(f'upload: {f_name}: No such file or directory')
+            except ConnectionError:
+                print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Connecting...')
+                time.sleep(0.5)
+                print(f'\r{" " * 100}\rServer Connection Error!\nTry it again later or contact an administrator, but don\'t worry. Your data is safe :)')
     else:
-        print('Usage: upload [path/to/file>...]')
+        print('Usage: upload [path/to/file]...')
 
 def print_progress_bar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 50, fill = '█', printEnd = "\r"):
     """
@@ -234,8 +254,8 @@ def print_progress_bar (iteration, total, prefix = '', suffix = '', decimals = 1
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '-' * (length - filledLength)
-    clean = ' ' * 70
-    print(f'\rclean', end = printEnd)
+    clean = ' ' * 100
+    print(f'\r{clean}', end = printEnd)
     print(f'\r{prefix} [{bar}] {percent}% {suffix}', end = printEnd)
     # Print New Line on Complete
     if iteration == total: 
