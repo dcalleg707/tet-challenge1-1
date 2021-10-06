@@ -2,7 +2,6 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import constants
-import os
 import json
 
 class DBServer(BaseHTTPRequestHandler):
@@ -14,7 +13,12 @@ class DBServer(BaseHTTPRequestHandler):
 
         if (path == '/'):
             f = open('data.store', 'r')
-            data = json.load(f)
+            keys = json.load(f)
+            keys = [list(d.keys()) for d in keys]
+            data = []
+            for k in keys:
+                data += k
+            
             res = { "data": data }
             self.send_response(200)
             self.send_header("content-type", "application/json")
@@ -32,7 +36,7 @@ class DBServer(BaseHTTPRequestHandler):
                 f = open('data.store', 'r')
                 datalist = json.load(f)
 
-                data = [d for d in datalist if query['id'][0] in d.keys()]
+                data = [d for d in datalist if query['id'][0] in list(d.keys())]
 
                 res = { "data": data }
                 self.send_response(200)
@@ -66,7 +70,6 @@ class DBServer(BaseHTTPRequestHandler):
             
             f = open('data.store', 'r')
             data = json.load(f)
-            print(field_data)
             entry = json.loads(field_data.decode(constants.ENCODING_FORMAT))
             if isinstance(entry, list):
                 for e in entry:

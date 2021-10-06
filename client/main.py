@@ -4,6 +4,7 @@ import os
 import requests
 import constants
 import json 
+import base64
 
 def print_title():
     os.system('clear')
@@ -84,9 +85,9 @@ def command_checker(cmd, args):
         if cmd == "upload":
             to_upload(args)
         elif cmd == "list-files":
-            to_list_files(args)
+            to_list_files()
         elif cmd == "download":
-            print('DOWNLOAD')
+            to_download(args)
         else:
             print(f'{cmd}: command not found')
 
@@ -131,11 +132,55 @@ def test_connection(url, port):
         time.sleep(3)
         raise ConnectionRefusedError
 
-def to_list_files(args=""):
+def to_download(args):
+    if args:
+        for f_name in args:
+            f_name = f_name.replace("'", "")
+            try:
+                print_progress_bar(0, 4, prefix = 'Progress:', suffix = 'Connecting...')
+                # TODO: test connection
+                
+                print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Downloading...')
+                r = requests.get(f'{constants.SERVER_URL}:{constants.HERMES_PORT}/?id={f_name}')
+                
+                print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Preparing data...')
+                xaa = open('xaa', 'w').read()
+                xab = open('xab', 'w').read()
+                xac = open('xac', 'w').read()
+                
+                xaa.write(r)
+
+                os.system(f'split -n 3 "{f_name}.gz"')
+
+                print_progress_bar(2, 4, prefix = 'Progress:', suffix = 'Unzippping...')
+                os.system(f'gunzip "{f_name}.gz"')
+
+                b1 = base64.b64encode(xaa).decode(constants.ENCODING_FORMAT)
+                b2 = base64.b64encode(xab).decode(constants.ENCODING_FORMAT)
+                b3 = base64.b64encode(xac).decode(constants.ENCODING_FORMAT)
+                
+                r = requests.post(
+                    constants.SERVER_URL+':'+str(constants.MOISES_PORT),
+                    data=json.dumps({ 'name': f_name, 'data_0': b1, 'data_1': b2, 'data_2': b3 }),
+                    headers={ 'content-type': 'application/json' }
+                )
+
+                print_progress_bar(3, 4, prefix = 'Progress:', suffix = 'Cleaning...')
+                os.system(f'rm *.gz xaa xab xac')
+
+                print_progress_bar(4, 4, prefix = 'Progress:', suffix = 'Complete!')
+                print()
+            except FileNotFoundError:
+                print(f'upload: {f_name}: No such file or directory')
+    else:
+        print('Usage: upload [path/to/file>...]')
+
+def to_list_files():
     try:
-        test_connection(constants.HERMES_URL, constants.HERMES_PORT)
-        r = requests.get("http://"+constants.HERMES_URL+':'+constants.HERMES_PORT+'/' + ('' if not args else ("?id="+' '.join(args))))
-        print(r.text)
+        r = requests.get(constants.SERVER_URL+':'+str(constants.HERMES_PORT))
+        data = json.loads(r.text)
+        for d in data:
+            print(d, end='\t')
     except Exception as e:
         print(e)
         return
@@ -152,15 +197,20 @@ def to_upload(args):
                 os.system(f'split -n 3 "{f_name}.gz"')
                 
                 print_progress_bar(2, 4, prefix = 'Progress:', suffix = 'Storing...')
-                xaa = ''.join(open('xaa', 'r').readlines())
-                xab = ''.join(open('xab', 'r').readlines())
-                xac = ''.join(open('xac', 'r').readlines())
-                requests.post(
-                    'http://'+constants.SERVER_URL + ':' + constants.MOISES_PORT,
-                    data=json.dumps({ 'name': f_name, 'data_0': xaa, 'data_1': xab, 'data_2': xac}),
+                xaa = open('xaa', 'rb').read()
+                xab = open('xab', 'rb').read()
+                xac = open('xac', 'rb').read()
+
+                b1 = base64.b64encode(xaa).decode(constants.ENCODING_FORMAT)
+                b2 = base64.b64encode(xab).decode(constants.ENCODING_FORMAT)
+                b3 = base64.b64encode(xac).decode(constants.ENCODING_FORMAT)
+
+                r = requests.post(
+                    constants.SERVER_URL+':'+str(constants.MOISES_PORT),
+                    data=json.dumps({ 'name': f_name, 'data_0': b1, 'data_1': b2, 'data_2': b3 }),
                     headers={ 'content-type': 'application/json' }
                 )
-                
+
                 print_progress_bar(3, 4, prefix = 'Progress:', suffix = 'Cleaning...')
                 os.system(f'rm *.gz xaa xab xac')
 
