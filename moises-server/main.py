@@ -1,81 +1,110 @@
-# Python 3 server example
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 import constants
 import requests
 import json
-#from Crypto.Cipher import AES
-#from secrets import token_bytes
+
+def to_string(dict):
+    return str(dict).replace("'", '"')
+
+def response(server, code, response):
+    server.send_response(code)
+    server.send_header("content-type", "application/json")
+    server.end_headers()
+    server.wfile.write(bytes(to_string(response), constants.ENCODING_FORMAT))  
+
+def get_path(server):
+    url = urlparse(server.path)
+    path = url.path
+    path = path[:-1] if path[-1] == '/' else path
+    return path
 
 class MoisesServer(BaseHTTPRequestHandler):
     def do_POST(self):
-        url = urlparse(self.path)
-        path = url.path
+        path = get_path(self)
         
-        if (path == '/'):
+        #
+        # code: 400
+        # For any missing parameter.
+        #
+        # code: 202
+        # Data to add sent to DB Server.
+        #
+        # code: 500
+        # DB Server Connection refused.
+        #
+        if (path == '/files'):
+            # Get body
             length = int(self.headers.get('content-length'))
             field_data = self.rfile.read(length)
-            body = json.loads(field_data.decode(constants.ENCODING_FORMAT))
+            
+            # Get body JSON
+            try:
+                body = json.loads(field_data.decode(constants.ENCODING_FORMAT))
+            except:
+                res = { "error": { "code": 400, "message": "Bad format for JSON" } }
+                response(self, 400, res)
+                return
 
-            if not 'data_0' in body:
-                res = { "error": { "code": 400, "message": "Missing 'data_0' in body" } }
-                self.send_response(400)
-                self.send_header("content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
-            if not 'data_1' in body:
-                res = { "error": { "code": 400, "message": "Missing 'data_1' in body" } }
-                self.send_response(400)
-                self.send_header("content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
-            if not 'data_2' in body:
-                res = { "error": { "code": 400, "message": "Missing 'data_2' in body" } }
-                self.send_response(400)
-                self.send_header("content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
+            # Check parameters
+            if not 'name' in body:
+                res = { "error": { "code": 400, "message": "Missing [name] in body" } }
+                response(self, 400, res)
+                return
+            
+            elif not 'data_0' in body:
+                res = { "error": { "code": 400, "message": "Missing [data_0] in body" } }
+                response(self, 400, res)
+                return
+            
+            elif not 'data_1' in body:
+                res = { "error": { "code": 400, "message": "Missing [data_1] in body" } }
+                response(self, 400, res)
+                return
+
+            elif not 'data_2' in body:
+                res = { "error": { "code": 400, "message": "Missing [data_2] in body" } }
+                response(self, 400, res)
+                return
+            
             else:
+                # Get parameters
                 name = body['name']
-                part1 = body['data_0']
-                part2 = body['data_1']
-                part3 = body['data_2']
-                name_encrypted = name
+                part0 = body['data_0']
+                part1 = body['data_1']
+                part2 = body['data_2']
+                name_encrypted = name # TODO: encrypt via AES
 
+                # Requests for DB Server
                 try:
                     requests.post(
-                        constants.GROUP_1_IP+':'+str(constants.NODE_PORT),
-                        data=json.dumps({ name_encrypted: part1}),
+                        f'{constants.GROUP_1_IP}:{constants.NODE_PORT}',
+                        data=json.dumps({ name_encrypted: part0 }),
                         headers={ 'content-type': 'application/json' }
                     )
                     requests.post(
-                        constants.GROUP_2_IP+':'+str(constants.NODE_PORT),
-                        data=json.dumps({ name_encrypted: part2}),
+                        f'{constants.GROUP_2_IP}:{constants.NODE_PORT}',
+                        data=json.dumps({ name_encrypted: part1 }),
                         headers={ 'content-type': 'application/json' }
                     )
                     requests.post(
-                        constants.GROUP_3_IP+':'+str(constants.NODE_PORT),
-                        data=json.dumps({ name_encrypted: part3}),
+                        f'{constants.GROUP_3_IP}:{constants.NODE_PORT}',
+                        data=json.dumps({ name_encrypted: part2 }),
                         headers={ 'content-type': 'application/json' }
                     )
                     res = { "status": { "code": 202, "message": "Accepted" } }
-                    self.send_response(202)
-                    self.send_header("content-type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT)) 
+                    response(self, 202, res) 
                 except requests.exceptions.RequestException as e:
                     res = { "error": { "code": 500, "message": e.response } }
-                    self.send_response(404)
-                    self.send_header("content-type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
-
+                    response(self, 500, res)
+        
+        #
+        # code: 404
+        # Resource not found.
+        #
         else:
-            res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
-            self.send_response(404)
-            self.send_header("content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
+            res = { "error": { "code": 404, "message": "Resource not found" } }
+            response(self, 404, res)
 
 if __name__ == "__main__":
     webServer = HTTPServer((constants.IP_SERVER, constants.PORT), MoisesServer)

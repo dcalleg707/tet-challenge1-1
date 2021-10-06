@@ -1,4 +1,3 @@
-# Python 3 server example
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 import constants
@@ -24,6 +23,10 @@ class DBServer(BaseHTTPRequestHandler):
     def do_GET(self):
         path = get_path(self)
 
+        #
+        # code: 200
+        # Data from file (also []).
+        #
         if (path == '/files'):
             # Open file to read
             f = open('data.store', 'r')
@@ -45,6 +48,10 @@ class DBServer(BaseHTTPRequestHandler):
             res = { "data": data }
             response(self, 200, res)
 
+        #
+        # code: 200
+        # Data by ID.
+        #
         elif (path.find('/files/') == 0):
             # Get ID
             id = path[7:]
@@ -57,13 +64,13 @@ class DBServer(BaseHTTPRequestHandler):
             data = [d for d in database if id in list(d.keys())]
 
             # Send response
-            if (len(data) != 0):
-                res = { "data": data }
-                response(self, 200, res)
-            else:
-                res = { "error": { "code": 404, "message": f"Data not found with id: {id}" } }
-                response(self, 404, res)
+            res = { "data": data }
+            response(self, 200, res)
 
+        #
+        # code: 404
+        # Resource not found.
+        #
         else:
             res = { "error": { "code": 404, "message": "Resource not found" } }
             response(self, 404, res)
@@ -71,11 +78,23 @@ class DBServer(BaseHTTPRequestHandler):
     def do_POST(self):
         path = get_path(self)
         
+        #
+        # code: 201
+        # Data added.
+        #
+        # code: 404
+        # Bad format for JSON.
+        #
         if (path == '/files'):
             # Get body
             length = int(self.headers.get('content-length'))
             field_data = self.rfile.read(length)
-            entry = json.loads(field_data.decode(constants.ENCODING_FORMAT))
+            try:
+                entry = json.loads(field_data.decode(constants.ENCODING_FORMAT))
+            except:
+                res = { "error": { "code": 404, "message": "Bad format for JSON" } }
+                response(self, 404, res)
+                return
 
             # Create data.store if it is not exists
             if not os.path.exists('data.store'):
@@ -97,7 +116,11 @@ class DBServer(BaseHTTPRequestHandler):
 
             res = { "data": data }
             response(self, 201, res)
-
+        
+        #
+        # code: 404
+        # Resource not found.
+        #
         else:
             res = { "error": { "code": 404, "message": "Resource not found" } }
             response(self, 404, res)
