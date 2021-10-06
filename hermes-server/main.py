@@ -1,6 +1,5 @@
-# Python 3 server example
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 import constants
 import requests
 import json
@@ -8,49 +7,84 @@ import json
 def to_string(dict):
     return str(dict).replace("'", '"')
 
+def response(server, code, response):
+    server.send_response(code)
+    server.send_header("content-type", "application/json")
+    server.end_headers()
+    server.wfile.write(bytes(to_string(response), constants.ENCODING_FORMAT))  
+
+def get_path(server):
+    url = urlparse(server.path)
+    path = url.path
+    path = path[:-1] if path[-1] == '/' else path
+    return path
+
 class HermesServer(BaseHTTPRequestHandler):
     def do_GET(self):
-        url = urlparse(self.path)
-        path = url.path
-        query = parse_qs(url.query)
-
-        for k in query.keys(): # Query string values can be lists. We get the first value only
-            query[k] = query[k][0]
+        path = get_path(self)
         
-        if (path == '/'):
+        #
+        # code: 200
+        # Files were found and sent.
+        #
+        # code: 500
+        # DB Server Connection refused.
+        #
+        if (path == '/files'):
             try:
-                if ('id' in query):
-                    part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}/data?id={query["id"]}')
-                    data = json.loads(part0.text)['data']
-                else:
-                    part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}')
-                    data = json.loads(part0.text)['data']
-                    data = [d for d in data] # TODO: decode here
+                # Get from any GROUP
+                part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}/files')
+                data = json.loads(part0.text)['data']
+                data = [d for d in data] # TODO: decode here
                 
-                if len(data) != 0:
-                    res = { "data": data }
-                    self.send_response(200)
-                    self.send_header("content-type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(bytes(to_string(res), constants.ENCODING_FORMAT)) 
-                else:
-                    res = { "error": { "code": 404, "message": f"No data was found with id {query['id']}"} }
-                    self.send_response(404)
-                    self.send_header("content-type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(bytes(to_string(res), constants.ENCODING_FORMAT)) 
+                # Send response
+                res = { "data": data }
+                response(self, 200, res)
+            
             except requests.exceptions.RequestException as e:
-                res = { "error": { "code": 500, "message": e.response } }
-                self.send_response(500)
-                self.send_header("content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(bytes(to_string(res), constants.ENCODING_FORMAT))
+                res = { "error": { "code": 500, "message": "Internal Error: DB Server Connection Refused" } }
+                response(self, 500, res)
+        
+        #
+        # code: 200
+        # File was found and sent.
+        #
+        # code: 404
+        # File does not exist in DB Server.
+        #
+        # code: 500
+        # DB Server Connection refused.
+        #
+        elif (path.find('/files/') == 0):
+            # Get ID
+            id = path[7:]
+            
+            try:
+                # Connect to DB Server and read data
+                part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}/files/{id}')
+                part1 = requests.get(f'{constants.GROUP_2_IP}:{constants.NODE_PORT}/files/{id}')
+                part2 = requests.get(f'{constants.GROUP_3_IP}:{constants.NODE_PORT}/files/{id}')
+                data = json.loads(part0.text)['data'] + json.loads(part1.text)['data'] + json.loads(part2.text)['data']
 
+                # Send response
+                if (len(data) != 0):
+                    res = { "data": data }
+                    response(self, 200, res)
+                else:
+                    res = { "error": { "code": 404, "message": f"Data not found with id: {id}" } }
+                    response(self, 404, res)
+                
+            except requests.exceptions.RequestException as e:
+                res = { "error": { "code": 500, "message": "Internal Error: DB Server Connection Refused" } }
+                response(self, 500, res)
+        
+        #
+        # code: 404
+        # Resource not found.
+        #
         else:
-            self.send_response(404)
-            self.send_header("content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(bytes("404 Error: Resource %s not found" % path, constants.ENCODING_FORMAT))
+            res = { "error": { "code": 404, "message": "Resource not found" } }
+            response(self, 404, res)
 
 if __name__ == "__main__":
     webServer = HTTPServer((constants.IP_SERVER, constants.PORT), HermesServer)

@@ -99,7 +99,7 @@ class DBServer(BaseHTTPRequestHandler):
             response(self, 201, res)
 
         else:
-            res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
+            res = { "error": { "code": 404, "message": "Resource not found" } }
             response(self, 404, res)
 
 
