@@ -5,6 +5,9 @@ import constants
 import requests
 import json
 
+def to_string(dict):
+    return str(dict).replace("'", '"')
+
 class HermesServer(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlparse(self.path)
@@ -18,23 +21,30 @@ class HermesServer(BaseHTTPRequestHandler):
             try:
                 if ('id' in query):
                     part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}/data?id={query["id"]}')
-                    data = json.loads(part0.text.replace("'", '"'))['data']
+                    data = json.loads(part0.text)['data']
                 else:
                     part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}')
-                    data = json.loads(part0.text.replace("'", '"'))['data']
+                    data = json.loads(part0.text)['data']
                     data = [d for d in data] # TODO: decode here
                 
-                res = { "data": data }
-                self.send_response(200)
-                self.send_header("content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT)) 
+                if len(data) != 0:
+                    res = { "data": data }
+                    self.send_response(200)
+                    self.send_header("content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(bytes(to_string(res), constants.ENCODING_FORMAT)) 
+                else:
+                    res = { "error": { "code": 404, "message": f"No data was found with id {query['id']}"} }
+                    self.send_response(404)
+                    self.send_header("content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(bytes(to_string(res), constants.ENCODING_FORMAT)) 
             except requests.exceptions.RequestException as e:
                 res = { "error": { "code": 500, "message": e.response } }
                 self.send_response(500)
                 self.send_header("content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
+                self.wfile.write(bytes(to_string(res), constants.ENCODING_FORMAT))
 
         else:
             self.send_response(404)

@@ -2,3 +2,7 @@
 __pycache__
 data.store
 music/
+*xaa
+*xab
+*xac
+*.mp3

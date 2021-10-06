@@ -140,7 +140,7 @@ def to_download(args):
                 
                 print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Downloading...')
                 r = requests.get(f'{constants.SERVER_URL}:{constants.HERMES_PORT}/?id={f_name}')
-                if 'error' in json.loads(r.text.replace("'", '"')): raise FileNotFoundError
+                if 'error' in json.loads(r.text): raise FileNotFoundError
 
                 r = json.loads(r.text.replace('"', '\\"').replace("'", '"'))
                 xaa_content = r['data'][0][f_name]

@@ -1,99 +1,106 @@
 # Python 3 server example
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 import constants
+import os.path
 import json
 
+def to_string(dict):
+    return str(dict).replace("'", '"')
+
+def response(server, code, response):
+    server.send_response(code)
+    server.send_header("content-type", "application/json")
+    server.end_headers()
+    server.wfile.write(bytes(to_string(response), constants.ENCODING_FORMAT))  
+
+def get_path(server):
+    url = urlparse(server.path)
+    path = url.path
+    path = path[:-1] if path[-1] == '/' else path
+    return path
+
 class DBServer(BaseHTTPRequestHandler):
-
     def do_GET(self):
-        url = urlparse(self.path)
-        path = url.path
-        query = parse_qs(url.query)
+        path = get_path(self)
 
-        if (path == '/'):
+        if (path == '/files'):
+            # Open file to read
             f = open('data.store', 'r')
-            keys = json.load(f)
-            keys = [list(d.keys()) for d in keys]
+            
+            # List keys
+            database = json.load(f) 
+            keys = [list(d.keys()) for d in database]
+            all_keys = []
             data = []
             for k in keys:
-                data += k
+                all_keys += k
             
+            # Select distinct
+            for k in all_keys:
+                if not k in data:
+                    data.append(k)
+            
+            # Send response
             res = { "data": data }
-            self.send_response(200)
-            self.send_header("content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))    
+            response(self, 200, res)
 
-        elif (path == '/data'):
-            if (len(query) == 0 or not 'id' in query):
-                res = { "error": { "code": 400, "message": "Missing 'id' as query parameter" } }
-                self.send_response(400)
-                self.send_header("content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
-            else:
-                f = open('data.store', 'r')
-                datalist = json.load(f)
+        elif (path.find('/files/') == 0):
+            # Get ID
+            id = path[7:]
+            
+            # Open file to read
+            f = open('data.store', 'r')
+            database = json.load(f)
 
-                data = [d for d in datalist if query['id'][0] in list(d.keys())]
+            # Looking for ID
+            data = [d for d in database if id in list(d.keys())]
 
+            # Send response
+            if (len(data) != 0):
                 res = { "data": data }
-                self.send_response(200)
-                self.send_header("content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
-        
+                response(self, 200, res)
+            else:
+                res = { "error": { "code": 404, "message": f"Data not found with id: {id}" } }
+                response(self, 404, res)
+
         else:
-            res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
-            self.send_response(404)
-            self.send_header("content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
+            res = { "error": { "code": 404, "message": "Resource not found" } }
+            response(self, 404, res)
 
     def do_POST(self):
-        url = urlparse(self.path)
-        path = url.path
-        query = parse_qs(url.query)
+        path = get_path(self)
         
-        if (path == '/'):
+        if (path == '/files'):
+            # Get body
             length = int(self.headers.get('content-length'))
             field_data = self.rfile.read(length)
-            
-            try:
+            entry = json.loads(field_data.decode(constants.ENCODING_FORMAT))
+
+            # Create data.store if it is not exists
+            if not os.path.exists('data.store'):
                 f = open('data.store', 'x')
-                print('data.store created')
                 f.write('[]')
                 f.close()
-            except:
-                print('data.store modified')
             
-            f = open('data.store', 'r')
+            # Get JSON in file to append entries
+            f = open('data.store', 'r+')
             data = json.load(f)
-            entry = json.loads(field_data.decode(constants.ENCODING_FORMAT))
             if isinstance(entry, list):
-                for e in entry:
-                    data.append(e)
+                data.append([e for e in entry])
             else:
                 data.append(entry)
             
-            f.close()
- 
-            f = open('data.store', 'w')
+            # Set JSON
             json.dump(data, f)
+            f.close()
 
             res = { "data": data }
-            self.send_response(201)
-            self.send_header("content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
-        
+            response(self, 201, res)
+
         else:
             res = { "error": { "code": 404, "message": "404 Resource Not Found" } }
-            self.send_response(404)
-            self.send_header("content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(str(res), constants.ENCODING_FORMAT))
+            response(self, 404, res)
 
 
 if __name__ == "__main__":
