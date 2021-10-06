@@ -142,31 +142,28 @@ def to_download(args):
                 
                 print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Downloading...')
                 r = requests.get(f'{constants.SERVER_URL}:{constants.HERMES_PORT}/?id={f_name}')
-                
-                print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Preparing data...')
-                xaa = open('xaa', 'w').read()
-                xab = open('xab', 'w').read()
-                xac = open('xac', 'w').read()
-                
-                xaa.write(r)
+                r = json.loads(r.text.replace("'", '"'))
+                xaa_content = r['data'][0][f_name]
+                xab_content = r['data'][1][f_name]
+                xac_content = r['data'][2][f_name]
 
-                os.system(f'split -n 3 "{f_name}.gz"')
+                print_progress_bar(1, 4, prefix = 'Progress:', suffix = 'Preparing data...')
+                xaa = open('xaa', 'wb')
+                xab = open('xab', 'wb')
+                xac = open('xac', 'wb')
+                
+                xaa.write(base64.b64decode(xaa_content.encode('latin-1')))
+                xab.write(base64.b64decode(xab_content.encode('latin-1')))
+                xac.write(base64.b64decode(xac_content.encode('latin-1')))
+
+                os.system(f'touch "{f_name}.gz"')
+                os.system(f'cat xaa >> "{f_name}.gz" && cat xab >> "{f_name}.gz" && cat xac >> "{f_name}.gz"')
 
                 print_progress_bar(2, 4, prefix = 'Progress:', suffix = 'Unzippping...')
                 os.system(f'gunzip "{f_name}.gz"')
 
-                b1 = base64.b64encode(xaa).decode(constants.ENCODING_FORMAT)
-                b2 = base64.b64encode(xab).decode(constants.ENCODING_FORMAT)
-                b3 = base64.b64encode(xac).decode(constants.ENCODING_FORMAT)
-                
-                r = requests.post(
-                    constants.SERVER_URL+':'+str(constants.MOISES_PORT),
-                    data=json.dumps({ 'name': f_name, 'data_0': b1, 'data_1': b2, 'data_2': b3 }),
-                    headers={ 'content-type': 'application/json' }
-                )
-
                 print_progress_bar(3, 4, prefix = 'Progress:', suffix = 'Cleaning...')
-                os.system(f'rm *.gz xaa xab xac')
+                os.system(f'rm xaa xab xac')
 
                 print_progress_bar(4, 4, prefix = 'Progress:', suffix = 'Complete!')
                 print()
