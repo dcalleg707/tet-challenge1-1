@@ -97,13 +97,13 @@ class DBServer(BaseHTTPRequestHandler):
                 return
 
             # Create data.store if it is not exists
-            if not os.path.exists('data.store'):
+            if not os.path.exists('./data.store'):
                 f = open('data.store', 'x')
                 f.write('[]')
                 f.close()
             
             # Get JSON in file to append entries
-            f = open('data.store', 'r+')
+            f = open('data.store', 'r')
             data = json.load(f)
             if isinstance(entry, list):
                 data.append([e for e in entry])
@@ -111,6 +111,7 @@ class DBServer(BaseHTTPRequestHandler):
                 data.append(entry)
             
             # Set JSON
+            f = open('data.store', 'w')
             json.dump(data, f)
             f.close()
 

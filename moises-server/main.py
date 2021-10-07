@@ -78,24 +78,24 @@ class MoisesServer(BaseHTTPRequestHandler):
                 # Requests for DB Server
                 try:
                     requests.post(
-                        f'{constants.GROUP_1_IP}:{constants.NODE_PORT}',
+                        f'{constants.GROUP_1_IP}:{constants.NODE_PORT}/files',
                         data=json.dumps({ name_encrypted: part0 }),
                         headers={ 'content-type': 'application/json' }
                     )
                     requests.post(
-                        f'{constants.GROUP_2_IP}:{constants.NODE_PORT}',
+                        f'{constants.GROUP_2_IP}:{constants.NODE_PORT}/files',
                         data=json.dumps({ name_encrypted: part1 }),
                         headers={ 'content-type': 'application/json' }
                     )
                     requests.post(
-                        f'{constants.GROUP_3_IP}:{constants.NODE_PORT}',
+                        f'{constants.GROUP_3_IP}:{constants.NODE_PORT}/files',
                         data=json.dumps({ name_encrypted: part2 }),
                         headers={ 'content-type': 'application/json' }
                     )
                     res = { "status": { "code": 202, "message": "Accepted" } }
                     response(self, 202, res) 
                 except requests.exceptions.RequestException as e:
-                    res = { "error": { "code": 500, "message": e.response } }
+                    res = { "error": { "code": 500, "message": "Internal Error: DB Server Connection Refused" } }
                     response(self, 500, res)
         
         #
