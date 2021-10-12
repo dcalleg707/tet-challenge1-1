@@ -19,9 +19,32 @@ def get_path(server):
     path = path[:-1] if path[-1] == '/' else path
     return path
 
+def check_ips(ip_list):
+    new_ip = ""
+    for ip in ip_list:
+        try:
+            test = requests.get(f'{ip}:{constants.NODE_PORT}/', timeout=0.6)
+            new_ip = ip
+            break
+        except:
+            print(f'DB Server {ip} connection failed!')
+    
+    if new_ip == '':
+        return new_ip
+    else:
+        raise requests.exceptions.RequestException
+
 class HermesServer(BaseHTTPRequestHandler):
     def do_GET(self):
         path = get_path(self)
+        
+        #
+        # code: 200
+        # Connection stablished.
+        #
+        if (path == '/'):
+            res = { "response": { "code": 200, "message": "Connected" } }
+            response(self, 200, res)
         
         #
         # code: 200
@@ -30,12 +53,14 @@ class HermesServer(BaseHTTPRequestHandler):
         # code: 500
         # DB Server Connection refused.
         #
-        if (path == '/files'):
+        elif (path == '/files'):
             try:
-                # Get from any GROUP
-                part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}/files')
+                # Get available ip from any GROUP
+                ip_to_ask = check_ips(constants.GROUP_1_IP + constants.GROUP_2_IP + constants.GROUP_3_IP)
+                part0 = requests.get(f'{ip_to_ask}:{constants.NODE_PORT}/files')
+
                 data = json.loads(part0.text)['data']
-                data = [d for d in data] # TODO: decode here
+                data = [d for d in data]
                 
                 # Send response
                 res = { "data": data }
@@ -61,9 +86,13 @@ class HermesServer(BaseHTTPRequestHandler):
             
             try:
                 # Connect to DB Server and read data
-                part0 = requests.get(f'{constants.GROUP_1_IP}:{constants.NODE_PORT}/files/{id}')
-                part1 = requests.get(f'{constants.GROUP_2_IP}:{constants.NODE_PORT}/files/{id}')
-                part2 = requests.get(f'{constants.GROUP_3_IP}:{constants.NODE_PORT}/files/{id}')
+                ip_part1 = check_ips(constants.GROUP_1_IP)
+                ip_part2 = check_ips(constants.GROUP_2_IP)
+                ip_part3 = check_ips(constants.GROUP_3_IP)
+
+                part0 = requests.get(f'{ip_part1}:{constants.NODE_PORT}/files/{id}')
+                part1 = requests.get(f'{ip_part2}:{constants.NODE_PORT}/files/{id}')
+                part2 = requests.get(f'{ip_part3}:{constants.NODE_PORT}/files/{id}')
                 data = json.loads(part0.text)['data'] + json.loads(part1.text)['data'] + json.loads(part2.text)['data']
 
                 # Send response

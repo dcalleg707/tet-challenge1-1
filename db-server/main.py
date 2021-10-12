@@ -25,6 +25,14 @@ class DBServer(BaseHTTPRequestHandler):
 
         #
         # code: 200
+        # Connection stablished.
+        #
+        if (path == '/'):
+            res = { "response": { "code": 200, "message": "Connected" } }
+            response(self, 200, res)
+
+        #
+        # code: 200
         # Data from file (also []).
         #
         if (path == '/files'):

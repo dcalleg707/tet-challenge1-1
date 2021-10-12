@@ -1,7 +1,7 @@
 PORT=11000
 ENCODING_FORMAT = 'latin-1'
 IP_SERVER = ''
-GROUP_1_IP='http://172.16.1.200'
-GROUP_2_IP='http://172.16.1.202'
-GROUP_3_IP='http://172.16.1.204'
+GROUP_1_IP=['http://172.16.1.200','http://172.16.1.201']
+GROUP_2_IP=['http://172.16.1.202','http://172.16.1.203']
+GROUP_3_IP=['http://172.16.1.204','http://172.16.1.205']
 NODE_PORT=12000
