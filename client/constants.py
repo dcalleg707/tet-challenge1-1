@@ -1,6 +1,4 @@
 ENCODING_FORMAT='latin-1'
-SERVER_URL='http://127.0.0.1'
-MOISES_URL='http://127.0.0.1'
-HERMES_URL='http://127.0.0.1'
+SERVER_URL='http://db-lb-1512057425.us-east-2.elb.amazonaws.com'
 MOISES_PORT=10000
 HERMES_PORT=11000

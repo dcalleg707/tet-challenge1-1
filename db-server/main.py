@@ -27,7 +27,7 @@ class DBServer(BaseHTTPRequestHandler):
         # code: 200
         # Connection stablished.
         #
-        if (path == '/'):
+        if (path == ''):
             res = { "response": { "code": 200, "message": "Connected" } }
             response(self, 200, res)
 
