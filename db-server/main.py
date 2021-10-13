@@ -35,7 +35,7 @@ class DBServer(BaseHTTPRequestHandler):
         # code: 200
         # Data from file (also []).
         #
-        if (path == '/files'):
+        elif (path == '/files'):
             # Open file to read
             f = open('data.store', 'r')
             
