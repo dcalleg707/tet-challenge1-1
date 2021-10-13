@@ -29,7 +29,7 @@ def check_ips(ip_list):
         except:
             print(f'DB Server {ip} connection failed!')
     
-    if new_ip == '':
+    if new_ip != '':
         return new_ip
     else:
         raise requests.exceptions.RequestException
