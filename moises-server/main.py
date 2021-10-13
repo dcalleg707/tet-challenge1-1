@@ -19,6 +19,13 @@ def get_path(server):
     path = path[:-1] if path[-1] == '/' else path
     return path
 
+def send_all(ip_list, data):
+    for ip in ip_list:
+        try:
+            requests.post(f'{ip}:{constants.NODE_PORT}/files', data=data, headers={ 'content-type': 'application/json' })
+        except:
+            print(f'DB Server {ip} connection failed!')
+
 def check_ips(ip_list):
     new_ip = ""
     for ip in ip_list:
@@ -111,25 +118,10 @@ class MoisesServer(BaseHTTPRequestHandler):
 
                 # Requests for DB Server
                 try:
-                    ip_1 = check_ips(constants.GROUP_1_IP)
-                    ip_2 = check_ips(constants.GROUP_2_IP)
-                    ip_3 = check_ips(constants.GROUP_3_IP)
+                    send_all(constants.GROUP_1_IP, json.dumps({ name_encrypted: part0 }))
+                    send_all(constants.GROUP_2_IP, json.dumps({ name_encrypted: part1 }))
+                    send_all(constants.GROUP_3_IP, json.dumps({ name_encrypted: part2 }))
 
-                    requests.post(
-                        f'{ip_1}:{constants.NODE_PORT}/files',
-                        data=json.dumps({ name_encrypted: part0 }),
-                        headers={ 'content-type': 'application/json' }
-                    )
-                    requests.post(
-                        f'{ip_2}:{constants.NODE_PORT}/files',
-                        data=json.dumps({ name_encrypted: part1 }),
-                        headers={ 'content-type': 'application/json' }
-                    )
-                    requests.post(
-                        f'{ip_3}:{constants.NODE_PORT}/files',
-                        data=json.dumps({ name_encrypted: part2 }),
-                        headers={ 'content-type': 'application/json' }
-                    )
                     res = { "status": { "code": 202, "message": "Accepted" } }
                     response(self, 202, res) 
                 except requests.exceptions.RequestException as e:
