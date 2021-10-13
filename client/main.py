@@ -154,6 +154,8 @@ def to_download(args):
             # Get response
             print_progress_bar(1, 4, suffix = 'Downloading...')
             r = requests.get(f'{constants.SERVER_URL}:{constants.HERMES_PORT}/files/{f_name}')
+            if r.status_code == 502:
+                raise ConnectionError
             data = json.loads(r.text)
             if 'error' in data:
                 if data['error']['code'] == 404: raise FileNotFoundError
@@ -220,6 +222,8 @@ def to_list_files():
         test_connection(constants.SERVER_URL, constants.HERMES_PORT)
         
         r = requests.get(f'{constants.SERVER_URL}:{constants.HERMES_PORT}/files')
+        if r.status_code == 502:
+            raise ConnectionError
         data = json.loads(r.text)
         if 'error' in data:
             raise ConnectionAbortedError
